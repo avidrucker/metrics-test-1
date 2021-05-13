@@ -1,7 +1,7 @@
 (ns clojure-metrics-test-1.core
   (:gen-class))
 
-;; goal: clojure dynamically parse function tree
+;; goal: clojure dynamically parse function syntax tree tokens
 ;; research: https://stackoverflow.com/questions/21216991/how-to-transform-instaparse-output-into-a-function-that-can-be-evaluated
 
 (defmacro defsource
@@ -13,6 +13,16 @@
        (alter-meta! (var ~fn-name) assoc :source (quote ~&form))
        (var ~fn-name)))
 
+;; example function
+;; question: Is there a way to save a function as-is in
+;;    context (bind with "defn") while still being able
+;;    to analyze syntax tree dynamically (?)?
+
+(defn square2
+  "takes in number x and returns x^2"
+  [x]
+  (* x x))
+
 (defsource square [x]
   (* x x))
 
@@ -22,20 +32,43 @@
 (defsource slope [m x b]
   (+ (* m x) b))
 
-(defmacro source-meta [func]
-  `(:source (meta (var ~func))))
+(defmacro source-meta
+  "takes in function and returns its meta data"
+  [function]
+  `(:source (meta (var ~function))))
 
-(defn tree-to-list [t]
-  (->> t
-       (tree-seq seq? rest)
-       (map identity)))
+;; TODO: marked for deletion, assess utility to project
+;; (defn tree-to-list
+;;   "takes in tree 't' and returns it as a list"
+;;   [t]
+;;   (->> t
+;;        (tree-seq seq? rest)
+;;        (map identity)))
 
+;; question: can this function be rewritten
+;;    more simply with complement or partial?
+;;    If yes, what would its syntax be?
 (defn non-lists [s]
   (filter #(not (list? %)) s))
 
-(defn get-tokens [x]
-     (rest (tree-seq seq? non-lists
-                    (tree-seq seq? seq x))))
+
+(defn get-tokens
+  "takes in a function meta data. returns its syntax tree as a list of tokens"
+  [x]
+  (rest (tree-seq seq? non-lists
+                  (tree-seq seq? seq x))))
+
+;; TODO: Implement stub
+(defn get-sexp-count [x]
+  x)
+
+;; TODO: Implement stub
+(defn get-unique-token-count [x]
+  x)
+
+;; TODO: Implement stub
+(defn get-full-docs-page [x]
+  x)
 
 (defn get-args [s]
   (vec (filter vector? s)))
@@ -64,8 +97,7 @@
       (println (str "rect meta: " (seq rect-meta)))
       (println (str "rect tokens: " (seq rect)))
       (println (str "rect tokens denatured: " (seq flat-rect)))
-      (println (str "rect token count: " (count flat-rect )))
-      (println (str "rect args: " (first (get-args (seq rect)))))
-      )))
+      (println (str "rect token count: " (count flat-rect)))
+      (println (str "rect args: " (first (get-args (seq rect))))))))
 
 (-main)
